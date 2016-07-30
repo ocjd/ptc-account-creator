@@ -2,6 +2,8 @@ require 'nokogiri'
 require 'net/http'
 require 'digest/md5'
 require 'open-uri'
+require 'openssl'
+require 'certified'
 
 def get_csrf_token(doc)
 	csrf_token = doc.css('form > input[type="hidden"]').first
@@ -22,6 +24,7 @@ def create_account
 
 	http = Net::HTTP.new('club.pokemon.com', 443)
 	http.use_ssl = true
+	http.verify_mode = OpenSSL::SSL::VERIFY_NONE
 	path = '/us/pokemon-trainer-club/sign-up/'
 
 	response = http.get(path, nil)
@@ -109,18 +112,19 @@ def create_account
 	end
 
 	File.open("accounts.txt", 'a') do |file|
-		file.puts "('#{username}', '#{password}', 'ptc'),"
+		file.puts "#{username}:#{password}"
 	end
 end
 
-times = 25
+times = 10
 counter = 0
 try_count = 0
+puts "PTC Account Creator Started"
 while(counter < times)
 	begin
 		create_account
 		counter += 1
-		puts "[Try: #{try_count}] Account created"
+		puts "[Try: #{try_count}] #{counter} Accounts created"
 		try_count += 1
 	rescue
 		puts "[Try: #{try_count}] Failed"
